@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KaBuM! - Fuga Explosiva de Entregas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --kabum-blue: #00559F;
+      --kabum-orange: #FF6500;
+      --bg-dark: #0A0B0E;
+      --text-light: #E2E8F0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      font-family: 'Outfit', sans-serif;
+      overflow-x: hidden;
+    }
+    /* Hotsite Header */
+    header {
+      background: linear-gradient(90deg, #002244 0%, var(--kabum-blue) 100%);
+      border-bottom: 4px solid var(--kabum-orange);
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(255, 101, 0, 0.4);
+    }
+    .brand-title {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #FFF;
+      font-style: italic;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-title span { color: var(--kabum-orange); }
+    .badge {
+      background: var(--kabum-orange);
+      color: #FFF;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    /* Hotsite Hero */
+    .hero-banner {
+      text-align: center;
+      padding: 50px 20px;
+      background: radial-gradient(circle at center, rgba(0,85,159,0.3) 0%, rgba(10,11,14,1) 80%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .hero-title {
+      font-size: 3.5rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 15px;
+      color: #FFF;
+      text-shadow: 0 0 15px rgba(255,101,0,0.6);
+    }
+    .hero-subtitle {
+      font-size: 1.2rem;
+      color: #A0AEC0;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    /* Game Area */
+    .game-section {
+      padding: 40px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .game-frame {
+      border: 8px solid var(--kabum-blue);
+      border-radius: 16px;
+      background: #222;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 50px rgba(0, 85, 159, 0.5);
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 650px;
+      background-color: #2c2f33;
+    }
+    /* HUD */
+    .hud-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .hud-box {
+      background: rgba(0, 0, 0, 0.85);
+      border: 2px solid var(--kabum-orange);
+      padding: 12px 25px;
+      border-radius: 8px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1rem;
+      color: #FFF;
+      box-shadow: 0 4px 0 #000;
+    }
+    .status-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      font-size: 3.5rem;
+      color: #FFF;
+      text-shadow: 0 0 30px #000, 4px 4px 0 var(--kabum-orange);
+      text-align: center;
+      text-transform: uppercase;
+      pointer-events: none;
+      display: none;
+      width: 100%;
+      z-index: 10;
+    }
+    .controls-bar {
+      background: #111;
+      padding: 20px;
+      text-align: center;
+      font-size: 1rem;
+      color: #CBD5E0;
+      border-top: 4px solid #222;
+    }
+    kbd {
+      background: #2D3748;
+      color: var(--kabum-orange);
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #4A5568;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.8rem;
+      margin: 0 4px;
+    }
+    /* Modal / Recompensa */
+    .coupon-modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.95);
+      display: none; justify-content: center; align-items: center;
+      z-index: 1000; padding: 20px;
+    }
+    .coupon-card {
+      background: linear-gradient(135deg, #1A202C 0%, #0A0B0E 100%);
+      border: 4px solid var(--kabum-orange);
+      border-radius: 16px;
+      padding: 50px;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 0 80px rgba(255, 101, 0, 0.5);
+    }
+    .coupon-code {
+      background: #000; border: 3px dashed var(--kabum-orange);
+      color: #00FF66; font-family: 'Press Start 2P', monospace;
+      font-size: 1.8rem; padding: 25px; margin: 30px 0;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .coupon-code:hover { background: #111; transform: scale(1.02); }
+    .btn-kabum {
+      background: var(--kabum-orange); color: #FFF;
+      border: none; padding: 18px 36px; font-size: 1.2rem;
+      font-weight: 900; border-radius: 8px; cursor: pointer;
+      text-transform: uppercase; text-decoration: none; display: inline-block;
+      transition: background 0.3s;
+    }
+    .btn-kabum:hover { background: #e05900; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-title">KaBuM! <span>Express</span></div>
+    <div class="badge">Missão de Entrega</div>
+  </header>
+
+  <div class="hero-banner">
+    <h1 class="hero-title">Operação Black Ninja</h1>
+    <p class="hero-subtitle">Assuma o volante da Van Ninja. Entre no Centro de Distribuição, resgate um dos 4 produtos de elite e fuja em alta velocidade por 20 segundos para entregar ao cliente VIP e garantir seu desconto!</p>
+  </div>
+
+  <div class="game-section">
+    <div class="game-frame">
+      <canvas id="gameCanvas" width="1200" height="650"></canvas>
+      
+      <div class="hud-overlay">
+        <div class="hud-box">VIDA da VAN: <span id="hpText" style="color:#00FF66;">100%</span></div>
+        <div class="hud-box" id="timerBox" style="color: #FFD700;">OBJETIVO: VÁ AO CD</div>
+      </div>
+
+      <div id="statusMessage" class="status-message"></div>
+
+      <div class="controls-bar">
+        Pressione <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> ou as <kbd>Setas</kbd> para pilotar.
+      </div>
+    </div>
+  </div>
+
+  <div class="coupon-modal" id="couponModal">
+    <div class="coupon-card">
+      <h2 style="color:var(--kabum-orange); font-size: 2.5rem; text-transform:uppercase; font-family: 'Outfit', sans-serif; font-weight: 900;">Entrega Concluída!</h2>
+      <p style="margin-top:20px; font-size: 1.2rem; color: #A0AEC0;">A encomenda chegou segura. Você pilotou como um verdadeiro Ninja e desbloqueou seu prêmio.</p>
+      
+      <div class="coupon-code" id="couponCode" onclick="copyCoupon()">KABUMDELIVERY10</div>
+      <p style="color:#718096; font-size:1rem; margin-bottom:30px;">Clique no código acima para copiar (10% OFF)</p>
+
+      <a href="https://www.kabum.com.br" target="_blank" class="btn-kabum">Resgatar no Site</a>
+      <button class="btn-kabum" style="background:#2D3748; margin-left: 15px;" onclick="location.reload()">Jogar Novamente</button>
+    </div>
+  </div>
+
+  <script>
+    // Evita que a página role ao usar as setas do teclado para jogar
+    window.addEventListener("keydown", function(e) {
+      if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+        e.preventDefault();
+      }
+    }, false);
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Controles
+    const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, a: false, s: false, d: false };
+    window.addEventListener('keydown', e => { if (keys.hasOwnProperty(e.key)) keys[e.key] = true; });
+    window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
+
+    // Configurações Globais
+    const TILE = 300; 
+    const BLOCK = 1000; 
+    const MAP_COLS = 6;
+    const MAP_ROWS = 4;
+    const MAP_WIDTH = MAP_COLS * BLOCK + (MAP_COLS + 1) * TILE;
+    const MAP_HEIGHT = MAP_ROWS * BLOCK + (MAP_ROWS + 1) * TILE;
+
+    const state = {
+      phase: 'pickup', 
+      surviveTime: 20.0, // Tempo de perseguição exato
+      waitTime: 3.5,     // Tempo antes da polícia chegar
+      hp: 100,
+      productPicked: null,
+      cameraZoom: 0.65   // Zoom aproximado (Van parece muito maior)
+    };
+
+    // A Nova VAN da KaBuM! (Maior, muito mais rápida, estilo GTA)
+    const player = {
+      x: MAP_WIDTH / 2, y: MAP_HEIGHT / 2 + 500,
+      w: 45, h: 100,      // Dimensões maiores
+      angle: -Math.PI/2, speed: 0,
+      maxSpeed: 12.0,     // Muito veloz
+      accel: 0.25,        // Arrancada forte
+      friction: 0.96,     // Desliza um pouco (drift)
+      turnSpeed: 0.08     // Curvas ágeis
+    };
+
+    // Centro de Distribuição Gigante (Ocupa 2 quarteirões)
+    const cdRect = { x: TILE, y: TILE, w: BLOCK * 2 + TILE, h: BLOCK };
+    const cdGate = { x: cdRect.x + cdRect.w/2 - 250, y: cdRect.y + cdRect.h - 10, w: 500, h: 20 };
+
+    // Produtos Perfeitamente Espaçados no CD
+    const spacing = cdRect.w / 5;
+    const products = [
+      { id: 'PS5', brand: 'PlayStation', color: '#FFF', x: cdRect.x + spacing * 1, y: cdRect.y + cdRect.h * 0.45, radius: 90, draw: drawPS5 },
+      { id: 'Logitech', brand: 'Headset', color: '#00B8FC', x: cdRect.x + spacing * 2, y: cdRect.y + cdRect.h * 0.45, radius: 90, draw: drawLogitech },
+      { id: 'Intel', brand: 'Core CPU', color: '#0068B5', x: cdRect.x + spacing * 3, y: cdRect.y + cdRect.h * 0.45, radius: 90, draw: drawIntel },
+      { id: 'Dell', brand: 'Alienware', color: '#00FFFF', x: cdRect.x + spacing * 4, y: cdRect.y + cdRect.h * 0.45, radius: 90, draw: drawDell }
+    ];
+
+    const buildings = [];
+    for (let c = 0; c < MAP_COLS; c++) {
+      for (let r = 0; r < MAP_ROWS; r++) {
+        if ((c === 0 || c === 1) && r === 0) continue;
+        buildings.push({
+          x: TILE + c * (BLOCK + TILE), y: TILE + r * (BLOCK + TILE),
+          w: BLOCK, h: BLOCK,
+          color: `hsl(220, 15%, ${15 + Math.random()*15}%)`,
+          height: 150 + Math.random() * 250 
+        });
+      }
+    }
+
+    const policeCars = [];
+    function spawnPolice() {
+      let px, py;
+      do {
+        px = Math.random() * MAP_WIDTH; py = Math.random() * MAP_HEIGHT;
+      } while(Math.hypot(px - player.x, py - player.y) < 1200);
+      policeCars.push({
+        x: px, y: py, w: 40, h: 90, angle: 0, speed: 0,
+        maxSpeed: 9.5, // Perigosa, mas a Van foge nas retas
+        accel: 0.20, friction: 0.95, turnSpeed: 0.06
+      });
+    }
+
+    const npc = { active: false, x: 0, y: 0, radius: 25 };
+    function spawnNPC() {
+      const b = buildings[Math.floor(Math.random() * buildings.length)];
+      npc.x = b.x + b.w / 2; npc.y = b.y + b.h + 50; npc.active = true;
+    }
+
+    // --- DESENHOS VETORIAIS DE ALTA QUALIDADE ---
+    function drawPS5(ctx, x, y, scale) {
+      ctx.save(); ctx.translate(x, y - 15); ctx.scale(scale, scale);
+      ctx.shadowColor = '#00439C'; ctx.shadowBlur = 25;
+      ctx.fillStyle = '#0a0a0a'; ctx.fillRect(-35, -55, 30, 110);
+      ctx.fillStyle = '#f0f0f0';
+      ctx.beginPath(); ctx.moveTo(-40, -65); ctx.quadraticCurveTo(-20, 0, -25, 65); ctx.lineTo(-38, 65); ctx.quadraticCurveTo(-35, 0, -50, -65); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-10, -60); ctx.quadraticCurveTo(-15, 0, -3, 60); ctx.lineTo(10, 60); ctx.quadraticCurveTo(0, 0, 5, -60); ctx.fill();
+      ctx.translate(35, 35); ctx.shadowBlur = 10; ctx.fillStyle = '#f0f0f0';
+      ctx.beginPath(); ctx.arc(-15, 0, 14, 0, Math.PI*2); ctx.arc(15, 0, 14, 0, Math.PI*2); ctx.fill(); ctx.fillRect(-15, -14, 30, 28);
+      ctx.fillStyle = '#0a0a0a'; ctx.beginPath(); ctx.arc(-10, 8, 8, 0, Math.PI*2); ctx.arc(10, 8, 8, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#aaa'; ctx.fillRect(-22, -6, 12, 3); ctx.fillRect(-17.5, -10, 3, 11);
+      ctx.beginPath(); ctx.arc(14, -5, 2.5, 0, Math.PI*2); ctx.arc(22, -5, 2.5, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+
+    function drawLogitech(ctx, x, y, scale) {
+      ctx.save(); ctx.translate(x, y - 20); ctx.scale(scale, scale);
+      ctx.shadowColor = '#00B8FC'; ctx.shadowBlur = 25;
+      ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 18; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(0, -15, 38, Math.PI, 0); ctx.stroke();
+      ctx.strokeStyle = '#00B8FC'; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.arc(0, -12, 30, Math.PI, 0); ctx.stroke();
+      ctx.fillStyle = '#111';
+      ctx.beginPath(); ctx.roundRect(-55, -20, 25, 55, 8); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(30, -20, 25, 55, 8); ctx.fill();
+      ctx.fillStyle = '#00B8FC'; ctx.fillRect(-48, -10, 10, 35); ctx.fillRect(38, -10, 10, 35);
+      ctx.fillStyle = '#FFF'; ctx.font = 'bold 12px Arial'; ctx.fillText('G', 43, 8);
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 8;
+      ctx.beginPath(); ctx.moveTo(-45, 25); ctx.lineTo(-10, 65); ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawIntel(ctx, x, y, scale) {
+      ctx.save(); ctx.translate(x, y - 10); ctx.scale(scale, scale);
+      ctx.shadowColor = '#0068B5'; ctx.shadowBlur = 25;
+      ctx.fillStyle = '#004d26'; ctx.fillRect(-45, -45, 90, 90);
+      ctx.fillStyle = '#FFD700';
+      for(let i=-40; i<=40; i+=8) {
+        ctx.fillRect(i, -45, 4, 4); ctx.fillRect(i, 41, 4, 4);
+        ctx.fillRect(-45, i, 4, 4); ctx.fillRect(41, i, 4, 4);
+      }
+      const grad = ctx.createLinearGradient(-35, -35, 35, 35);
+      grad.addColorStop(0, '#e0e0e0'); grad.addColorStop(0.5, '#ffffff'); grad.addColorStop(1, '#a0a0a0');
+      ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(-35, -35, 70, 70, 6); ctx.fill();
+      ctx.fillStyle = '#0068B5'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center'; ctx.fillText('intel', 0, -5);
+      ctx.font = '14px Arial'; ctx.fillText('CORE', 0, 15);
+      ctx.restore();
+    }
+
+    function drawDell(ctx, x, y, scale) {
+      ctx.save(); ctx.translate(x, y - 15); ctx.scale(scale, scale);
+      ctx.shadowColor = '#00FFFF'; ctx.shadowBlur = 25;
+      ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.roundRect(-60, 5, 120, 55, 5); ctx.fill();
+      ctx.fillStyle = '#0a0a0a'; ctx.fillRect(-50, 5, 100, 10);
+      ctx.fillStyle = '#00FFFF'; 
+      for(let row=0; row<4; row++) {
+        for(let col=0; col<12; col++) { ctx.fillRect(-48 + col*8.5, 20 + row*6, 6.5, 4); }
+      }
+      ctx.fillStyle = '#222'; ctx.fillRect(-15, 48, 30, 8);
+      ctx.fillStyle = '#111'; ctx.beginPath(); ctx.moveTo(-55, 5); ctx.lineTo(-45, -55); ctx.lineTo(45, -55); ctx.lineTo(55, 5); ctx.fill();
+      const screenGrad = ctx.createLinearGradient(0, -50, 0, 0);
+      screenGrad.addColorStop(0, '#001133'); screenGrad.addColorStop(1, '#00FFFF');
+      ctx.fillStyle = screenGrad; ctx.beginPath(); ctx.moveTo(-48, 2); ctx.lineTo(-40, -50); ctx.lineTo(40, -50); ctx.lineTo(48, 2); ctx.fill();
+      ctx.fillStyle = '#FFF'; ctx.beginPath(); ctx.ellipse(0, -25, 6, 8, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(-2, -26, 2, 3, -0.5, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(2, -26, 2, 3, 0.5, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+
+    // --- LÓGICA DO JOGO ---
+    let lastTime = performance.now();
+    function update(dt) {
+      if (state.phase === 'won' || state.phase === 'lost') return;
+
+      // Movimentação Fluida
+      if (keys.w || keys.ArrowUp) player.speed += player.accel;
+      if (keys.s || keys.ArrowDown) player.speed -= player.accel;
+      player.speed *= player.friction;
+      player.speed = Math.max(-player.maxSpeed/2, Math.min(player.maxSpeed, player.speed));
+
+      if (Math.abs(player.speed) > 0.5) {
+        const dir = player.speed > 0 ? 1 : -1;
+        if (keys.a || keys.ArrowLeft) player.angle -= player.turnSpeed * dir;
+        if (keys.d || keys.ArrowRight) player.angle += player.turnSpeed * dir;
+      }
+
+      let nx = player.x + Math.cos(player.angle) * player.speed;
+      let ny = player.y + Math.sin(player.angle) * player.speed;
+
+      let collision = false;
+      if(nx < 0 || nx > MAP_WIDTH || ny < 0 || ny > MAP_HEIGHT) collision = true;
+      for (const b of buildings) if (nx > b.x && nx < b.x + b.w && ny > b.y && ny < b.y + b.h) collision = true;
+
+      const inGateX = nx > cdGate.x && nx < cdGate.x + cdGate.w;
+      const inGateY = ny > cdGate.y - 20 && ny < cdGate.y + cdGate.h + 20;
+      if (!inGateX || !inGateY) {
+        if (nx > cdRect.x && nx < cdRect.x + cdRect.w && ny > cdRect.y && ny < cdRect.y + cdRect.h) collision = true;
+      }
+
+      if (!collision) { player.x = nx; player.y = ny; } else { player.speed *= 0.5; } // Bate e perde velocidade
+
+      // Fases do Jogo
+      if (state.phase === 'pickup') {
+        for (const p of products) {
+          if (Math.hypot(player.x - p.x, player.y - p.y) < p.radius + 30) {
+            state.productPicked = p; state.phase = 'wait';
+            showMessage("ALERTA!<br><span style='font-size:1.5rem; color:#FFF;'>FUJA EM 3 SEGUNDOS!</span>");
+            break;
+          }
+        }
+      } 
+      else if (state.phase === 'wait') {
+        state.waitTime -= dt;
+        if (state.waitTime <= 0) {
+          state.phase = 'chase'; hideMessage();
+          for(let i=0; i<7; i++) spawnPolice(); // Desafio de 7 carros
+        }
+      } 
+      else if (state.phase === 'chase') {
+        state.surviveTime -= dt;
+        document.getElementById('timerBox').innerText = `SOBREVIVA: ${Math.ceil(state.surviveTime)}s`;
+        if (state.surviveTime <= 0) {
+          state.phase = 'delivery';
+          document.getElementById('timerBox').innerText = `ENTREGUE O PACOTE!`;
+          showMessage("DESPISTOU!<br><span style='font-size:1.5rem; color:#00FF66;'>VÁ ATÉ O CLIENTE!</span>");
+          setTimeout(hideMessage, 3000);
+          spawnNPC();
+        }
+      }
+      else if (state.phase === 'delivery') {
+        if (Math.hypot(player.x - npc.x, player.y - npc.y) < npc.radius + 120) {
+          if (Math.abs(player.speed) < 2.0) { 
+            state.phase = 'won';
+            confetti({ particleCount: 200, spread: 90, origin: { y: 0.5 } });
+            setTimeout(() => document.getElementById('couponModal').style.display = 'flex', 1000);
+          }
+        }
+      }
+
+      // Inteligência da Polícia
+      if (state.phase === 'chase' || state.phase === 'delivery') {
+        for (const pol of policeCars) {
+          const angleToPlayer = Math.atan2(player.y - pol.y, player.x - pol.x);
+          let diff = angleToPlayer - pol.angle;
+          while (diff < -Math.PI) diff += Math.PI*2; while (diff > Math.PI) diff -= Math.PI*2;
+          
+          pol.angle += Math.sign(diff) * Math.min(Math.abs(diff), pol.turnSpeed);
+          pol.speed += pol.accel; pol.speed *= pol.friction;
+          if (pol.speed > pol.maxSpeed) pol.speed = pol.maxSpeed;
+
+          pol.x += Math.cos(pol.angle) * pol.speed; pol.y += Math.sin(pol.angle) * pol.speed;
+          for (const b of buildings) if (pol.x > b.x && pol.x < b.x + b.w && pol.y > b.y && pol.y < b.y + b.h) pol.speed *= -0.5;
+
+          // Dano colisão
+          if (Math.hypot(player.x - pol.x, player.y - pol.y) < 70) {
+            state.hp -= 25 * dt;
+            if (state.hp <= 0 && state.phase !== 'lost') {
+              state.phase = 'lost'; state.hp = 0;
+              showMessage("<span style='color:#FF3333;'>VAN DESTRUÍDA</span><br><span style='font-size:1.5rem'>RECARREGUE A PÁGINA</span>");
+            }
+          }
+        }
+      }
+
+      document.getElementById('hpText').innerText = Math.max(0, Math.floor(state.hp)) + '%';
+      document.getElementById('hpText').style.color = state.hp > 50 ? '#00FF66' : '#FF3333';
+    }
+
+    function draw() {
+      ctx.save();
+      const cx = canvas.width / 2 - player.x * state.cameraZoom;
+      const cy = canvas.height / 2 - player.y * state.cameraZoom;
+      ctx.translate(cx, cy); ctx.scale(state.cameraZoom, state.cameraZoom);
+
+      // Chão Asfalto
+      ctx.fillStyle = '#2c2f33'; ctx.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+
+      // Linhas da Rua
+      ctx.strokeStyle = '#555'; ctx.lineWidth = 12; ctx.setLineDash([50, 50]);
+      for(let x = TILE/2; x < MAP_WIDTH; x+=BLOCK+TILE) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, MAP_HEIGHT); ctx.stroke(); }
+      for(let y = TILE/2; y < MAP_HEIGHT; y+=BLOCK+TILE) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(MAP_WIDTH, y); ctx.stroke(); }
+      ctx.setLineDash([]);
+
+      // CD Gigante & Premium
+      ctx.fillStyle = '#1c1c1c'; ctx.fillRect(cdRect.x, cdRect.y, cdRect.w, cdRect.h);
+      ctx.strokeStyle = '#2a2a2a'; ctx.lineWidth = 2;
+      for(let i=0; i<cdRect.w; i+=100) { ctx.beginPath(); ctx.moveTo(cdRect.x+i, cdRect.y); ctx.lineTo(cdRect.x+i, cdRect.y+cdRect.h); ctx.stroke(); }
+      for(let i=0; i<cdRect.h; i+=100) { ctx.beginPath(); ctx.moveTo(cdRect.x, cdRect.y+i); ctx.lineTo(cdRect.x+cdRect.w, cdRect.y+i); ctx.stroke(); }
+
+      // Portão Hazard Stripes
+      ctx.save();
+      ctx.beginPath(); ctx.rect(cdGate.x, cdGate.y - 20, cdGate.w, 40); ctx.clip();
+      for(let i=-50; i<cdGate.w+50; i+=40) {
+          ctx.fillStyle = (Math.floor(i/40)%2===0) ? '#FFD700' : '#111';
+          ctx.beginPath(); ctx.moveTo(cdGate.x+i, cdGate.y-20); ctx.lineTo(cdGate.x+i+25, cdGate.y-20);
+          ctx.lineTo(cdGate.x+i-15, cdGate.y+20); ctx.lineTo(cdGate.x+i-40, cdGate.y+20); ctx.fill();
+      }
+      ctx.restore();
+      
+      // Muro Laranja CD
+      ctx.strokeStyle = '#FF6500'; ctx.lineWidth = 14; ctx.strokeRect(cdRect.x, cdRect.y, cdRect.w, cdRect.h);
+      
+      ctx.fillStyle = '#FF6500'; ctx.shadowColor = '#FF6500'; ctx.shadowBlur = 30;
+      ctx.font = 'bold 90px Arial'; ctx.textAlign = 'center';
+      ctx.fillText("CENTRO DE DISTRIBUIÇÃO KABUM!", cdRect.x + cdRect.w/2, cdRect.y + 200);
+      ctx.shadowBlur = 0;
+
+      // Renderiza Produtos no CD
+      if (state.phase === 'pickup') {
+        const timeScale = 1 + Math.sin(performance.now() / 200) * 0.05;
+        for (const p of products) {
+          ctx.beginPath(); ctx.ellipse(p.x, p.y + 20, 130, 60, 0, 0, Math.PI*2);
+          ctx.fillStyle = '#111'; ctx.fill(); ctx.strokeStyle = p.color; ctx.lineWidth = 5; ctx.stroke();
+          ctx.beginPath(); ctx.ellipse(p.x, p.y + 10, 130, 60, 0, 0, Math.PI*2);
+          ctx.fillStyle = '#222'; ctx.fill(); ctx.strokeStyle = p.color; ctx.lineWidth = 2; ctx.stroke();
+          
+          p.draw(ctx, p.x, p.y, timeScale);
+          
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#FFF'; ctx.font = 'bold 30px Arial'; ctx.textAlign = 'center';
+          ctx.fillText(p.brand, p.x, p.y + p.radius + 60);
+        }
+      }
+
+      // Renderiza Polícia
+      for (const pol of policeCars) {
+        ctx.save(); ctx.translate(pol.x, pol.y); ctx.rotate(pol.angle);
+        ctx.fillStyle = '#FFF'; ctx.beginPath(); ctx.roundRect(-pol.h/2, -pol.w/2, pol.h, pol.w, 5); ctx.fill();
+        ctx.fillStyle = '#111'; ctx.fillRect(-pol.h/2 + 15, -pol.w/2 + 5, pol.h - 30, pol.w - 10); // Vidros
+        ctx.fillStyle = '#222'; ctx.fillRect(-pol.h/2, -pol.w/2+5, 10, pol.w-10); // Capô
+        // Giroflex
+        if (Math.floor(performance.now() / 150) % 2 === 0) {
+          ctx.fillStyle = '#FF0000'; ctx.fillRect(-5, -pol.w/2, 10, 8);
+          ctx.fillStyle = '#0000FF'; ctx.fillRect(-5, pol.w/2 - 8, 10, 8);
+        }
+        ctx.restore();
+      }
+
+      // Renderiza VAN DO KABUM!
+      ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(player.angle);
+      ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(-player.h/2 - 8, -player.w/2 - 8, player.h, player.w); // Sombra
+      // Corpo da Van (Branco)
+      ctx.fillStyle = '#F0F0F0'; ctx.beginPath(); ctx.roundRect(-player.h/2, -player.w/2, player.h, player.w, 6); ctx.fill();
+      // Vidro Para-brisa Frontal
+      ctx.fillStyle = '#001122'; ctx.fillRect(player.h/2 - 25, -player.w/2 + 4, 15, player.w - 8);
+      // Teto / Baú Laranja
+      ctx.fillStyle = '#FF6500'; ctx.fillRect(-player.h/2 + 5, -player.w/2 + 5, player.h - 40, player.w - 10);
+      // Logo no Teto
+      ctx.fillStyle = '#FFF'; ctx.font = '900 20px Arial'; ctx.textAlign = 'center';
+      ctx.translate(-15, 0); ctx.rotate(-Math.PI/2); ctx.fillText("KaBuM!", 0, 7);
+      // Faróis
+      ctx.fillStyle = '#FFFFCC'; ctx.fillRect(player.h/2 + 5, -player.w/2 + 2, 8, 8); ctx.fillRect(player.h/2 + 5, player.w/2 - 10, 8, 8);
+      ctx.restore();
+
+      // Renderiza Cliente NPC
+      if (npc.active) {
+        ctx.beginPath(); ctx.arc(npc.x, npc.y, npc.radius, 0, Math.PI*2);
+        ctx.fillStyle = '#00FF66'; ctx.fill(); ctx.strokeStyle = '#FFF'; ctx.lineWidth = 4; ctx.stroke();
+        const arrowBounce = Math.sin(performance.now() / 150) * 25;
+        ctx.fillStyle = '#00FF66'; ctx.beginPath();
+        ctx.moveTo(npc.x, npc.y - 60 - arrowBounce); ctx.lineTo(npc.x - 25, npc.y - 110 - arrowBounce); ctx.lineTo(npc.x + 25, npc.y - 110 - arrowBounce); ctx.fill();
+        ctx.font = 'bold 36px Arial'; ctx.textAlign = 'center'; ctx.fillText("ENTREGUE AQUI", npc.x, npc.y - 130 - arrowBounce);
+      }
+
+      // Prédios Parallax 3D
+      for (const b of buildings) {
+        ctx.fillStyle = '#111'; ctx.fillRect(b.x, b.y, b.w, b.h);
+        const dx = (b.x + b.w/2 - (player.x)) * (b.height / 1200);
+        const dy = (b.y + b.h/2 - (player.y)) * (b.height / 1200);
+        
+        ctx.fillStyle = '#1a1a1a';
+        ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + dx, b.y + dy); ctx.lineTo(b.x + b.w + dx, b.y + dy); ctx.lineTo(b.x + b.w, b.y); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(b.x, b.y + b.h); ctx.lineTo(b.x + dx, b.y + b.h + dy); ctx.lineTo(b.x + b.w + dx, b.y + b.h + dy); ctx.lineTo(b.x + b.w, b.y + b.h); ctx.fill();
+        ctx.fillStyle = '#222';
+        ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + dx, b.y + dy); ctx.lineTo(b.x + dx, b.y + b.h + dy); ctx.lineTo(b.x, b.y + b.h); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(b.x + b.w, b.y); ctx.lineTo(b.x + b.w + dx, b.y + dy); ctx.lineTo(b.x + b.w + dx, b.y + b.h + dy); ctx.lineTo(b.x + b.w, b.y + b.h); ctx.fill();
+        
+        ctx.fillStyle = b.color; ctx.fillRect(b.x + dx, b.y + dy, b.w, b.h);
+        ctx.strokeStyle = '#444'; ctx.lineWidth = 6; ctx.strokeRect(b.x + dx, b.y + dy, b.w, b.h);
+      }
+      ctx.restore();
+    }
+
+    function loop(time) {
+      const dt = (time - lastTime) / 1000; lastTime = time;
+      update(dt); draw(); requestAnimationFrame(loop);
+    }
+
+    function showMessage(htmlMsg) { const el = document.getElementById('statusMessage'); el.innerHTML = htmlMsg; el.style.display = 'block'; }
+    function hideMessage() { document.getElementById('statusMessage').style.display = 'none'; }
+    function copyCoupon() { navigator.clipboard.writeText('KABUMDELIVERY10'); const el = document.getElementById('couponCode'); el.innerText = 'COPIADO!'; setTimeout(() => el.innerText = 'KABUMDELIVERY10', 2000); }
+
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+        if (w < 2 * r) r = w / 2; if (h < 2 * r) r = h / 2;
+        this.beginPath(); this.moveTo(x+r, y); this.arcTo(x+w, y, x+w, y+h, r); this.arcTo(x+w, y+h, x, y+h, r); this.arcTo(x, y+h, x, y, r); this.arcTo(x, y, x+w, y, r); this.closePath(); return this;
+      }
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
